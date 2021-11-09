@@ -1,0 +1,22 @@
+version: '3.7'
+services:
+  app:
+    build:
+      args:
+        user: admin
+        uid: 11125
+        work_dir: /var/www/admin
+        src_dir: /src
+      context: .
+      dockerfile: Dockerfile
+    container_name: pengumuman-app
+    restart: unless-stopped
+    working_dir: /var/www/admin
+    volumes:
+      - ./src:/var/www/admin
+    networks:
+      - local
+
+networks:
+  local:
+    driver: bridge
