@@ -62,26 +62,36 @@ function SendNotifAnnouncement($message = [])
 		return SendNotifError('Cant Read Latest Announcement');
 	}
 
-	if (empty($message['title']) OR $message['tPublish'] == "") {
-		return SendNotifError('Cant Read Latest Announcement');
+	if (empty($message['tPublish']) OR $message['tPublish'] == "") {
+		$message['tPublish'] = "";
+	}
+
+	if (empty($message['link']) OR $message['link'] == "") {
+		$message['link'] = "";
 	}
 
 	$messageContent = "<b>"."Latest Announcement"."</b>"."\n";
-	$messageContent .= "<pre>".$message['title']."\r\n</pre>";
-	$messageContent .= "<b>"."Time Publish"."</b>"." : ".$message['tPublish'];
+	$messageContent .= '<a href="'.$message['link'].'"><b>'.$message['title'].'</b></a>'."\r\n";
+	$messageContent .= "<b>"."Time Publish"."</b>"." : \r\n".date('d-m-Y H:i:s', strtotime($message['tPublish']))."\r\n";
 
 	return SendNotif($messageContent);
+}
+
+function CreateLogDir()
+{
+	$logdir = dirname(__FILE__).DIRECTORY_SEPARATOR.'log';
+	if (!file_exists($logdir)) {
+		@mkdir($logdir, 0755);
+	}
+	return $logdir;
 }
 
 function LogData($type = "none", $message = "")
 {
 	static $logpath;
 
-	$basedir = dirname(__FILE__).DIRECTORY_SEPARATOR.'log';
-	if (!file_exists($basedir)) {
-		@mkdir($basedir, 0755);
-	}
-	$logpath = $basedir.DIRECTORY_SEPARATOR.'log_'.date('Y_m_d').'.log';
+	$logdir = CreateLogDir();
+	$logpath = $logdir.DIRECTORY_SEPARATOR.'log_'.date('Y_m_d').'.log';
 
 	try {
 		$message = date('H:i:s')." - $type - $message"."\r\n";
@@ -92,13 +102,55 @@ function LogData($type = "none", $message = "")
 		throw new \Exception("Error Processing Write Log ".$e->getMessage(), 1);
 	}
 }
+
+function CheckHasBeenSent($messagetitle = "")
+{
+	static $write;
+	
+	$messagetitle = base64_encode($messagetitle);
+
+	$logdir = CreateLogDir();
+	$file = $logdir.DIRECTORY_SEPARATOR.'check_'.date('Y_m_d').'.txt';
+
+	clearstatcache($file);
+
+	if (file_exists($file)) {
+		$read = @file_get_contents($file);
+		if (empty($read)) {
+			$write = fopen($file,"w");
+			fwrite($write, $messagetitle);
+			fclose($write);
+			return false;
+		} else {
+			if ($messagetitle == $read) {
+				return true;
+			} else {
+				$write = fopen($file,"w");
+				fwrite($write, $messagetitle);
+				fclose($write);
+				return false;
+			}
+		}
+	} else {
+		$write = fopen($file,"w");
+		fwrite($write, $messagetitle);
+		fclose($write);
+		return false;
+	}
+}
+
 if (!file_exists(dirname(__FILE__).DIRECTORY_SEPARATOR.'homepage.txt')) {
 	touch(dirname(__FILE__).DIRECTORY_SEPARATOR.'homepage.txt');
 }
 $file = @file_get_contents(dirname(__FILE__).DIRECTORY_SEPARATOR.'homepage.txt');
-preg_match('/<div id=td_uid_22_618a37d40e28e ([\W\w\d\D\s\S]+)[\/div>$]/m', $file, $match);
+preg_match('/<div id=td_uid_6_348njhj34hj([\W\w\d\D\s\S]+)[\/div>$]/m', $file, $match);
 if (empty($match)) {
-	return SendNotifError('Check uid Changed');
+	preg_match('/tdBlocksArray\.push([\w\W]+)class="td_block_inner">/s', $file, $matchblock);
+	preg_match('/<div id=([a-z0-9\_]+)\sclass/s', $matchblock[1], $match);
+	preg_match("/<div id=$match[1]([\W\w\d\D\s\S]+)[\/div>$]/m", $file, $match);
+	if (empty($match)) {
+		return SendNotifError('Check uid Changed');
+	}
 }
 if (!is_string($match)) {
 	$match = stripslashes(json_encode($match[1]));
@@ -111,12 +163,21 @@ if (!file_exists(dirname(__FILE__).DIRECTORY_SEPARATOR.'announcementpage.txt')) 
 $file = @file_get_contents(dirname(__FILE__).DIRECTORY_SEPARATOR.'announcementpage.txt');
 preg_match('/datetime="([0-9\+\:\-\w]+)[\"$]/s', $file, $matchdatetime);
 preg_match('/title="([a-zA-Z0-9\s\(\)\-]+)[\"$]/s', $file, $matchtitle);
+preg_match('/<a\shref="([a-zA-Z0-9\:\/\.\-]+)[\"$]/s', $file, $matchlink);
 
-$strtotimeLastArticle = strtotime(date('Y-m-d',strtotime($matchdatetime[1])));
+$announcementTitle = $matchtitle[1];
+$announcementTime = $matchdatetime[1];
+$announcementLink = $matchlink[1];
+
+$strtotimeLastArticle = strtotime(date('Y-m-d',strtotime($announcementTime)));
 $strtotimeNow = strtotime(date('Y-m-d'));
 
-if ($strtotimeLastArticle == $strtotimeNow) {
-	SendNotifAnnouncement(['title' => $matchtitle[1], 'tPublish' => $matchdatetime[1]]);
+if ($strtotimeLastArticle == $strtotimeNow && !CheckHasBeenSent($announcementTitle)) {
+	SendNotifAnnouncement([
+		'title' => $announcementTitle,
+		'tPublish' => $announcementTime,
+		'link' => $announcementLink
+	]);
 } else {
-	LogData('error', 'No Recent Announcements');
+	LogData('info', 'No Recent Announcements');
 }
