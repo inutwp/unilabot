@@ -9,7 +9,7 @@ services:
         src_dir: /src
       context: .
       dockerfile: Dockerfile
-    container_name: pengumuman-app
+    container_name: unilabot-app
     restart: unless-stopped
     working_dir: /var/www/admin
     volumes:

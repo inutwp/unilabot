@@ -1,1 +1,1 @@
-*/60 * * * * sh /var/www/admin/scrap.sh
+*/5 * * * * sh /var/www/admin/scrap.sh
