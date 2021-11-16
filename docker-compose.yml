@@ -6,6 +6,7 @@ services:
         user: admin
         uid: 11125
         work_dir: /var/www/admin
+        config_dir: /config
         src_dir: /src
       context: .
       dockerfile: Dockerfile

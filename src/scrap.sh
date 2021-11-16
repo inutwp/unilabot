@@ -25,7 +25,7 @@ if [[ ${CHECKSCRAP} -gt 0 ]]; then
 	do
 		RESULT="$(actionScrap)"
 		if [[ ${RESULT} -gt 0 ]]; then
-			echo "Retry ${RETRY}"
+			echo "Retry Scraping ${RETRY}"
 			actionScrap
 			((RETRY++))
 		else
