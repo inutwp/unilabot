@@ -1,1 +1,0 @@
-*/10 * * * * sh /var/www/admin/scrap.sh

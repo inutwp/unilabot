@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+cd /var/www/admin/
 
 actionScrap() {
 	curl \
@@ -15,10 +17,10 @@ actionScrap() {
 }
 
 actionGetAnnouncements() {
-	php /var/www/admin/checkannouncements.php
+	php checkannouncements.php
 }
 
-CHECKSCRAP="$(actionScrap)"
+CHECKSCRAP="$(actionScrap)" 
 if [[ ${CHECKSCRAP} -gt 0 ]]; then
 	RETRY=0
 	until [[ ${RETRY} -ge 3 ]]
@@ -27,14 +29,12 @@ if [[ ${CHECKSCRAP} -gt 0 ]]; then
 		if [[ ${RESULT} -gt 0 ]]; then
 			echo "Retry Scraping ${RETRY}"
 			actionScrap
-			((RETRY++))
+			(( RETRY++ ))
 		else
-			echo "Get Announcements...."
 			actionGetAnnouncements
 			break
 		fi
 	done
 else
-	echo "Get Announcements...."
 	actionGetAnnouncements
 fi

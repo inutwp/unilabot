@@ -3,18 +3,16 @@ services:
   app:
     build:
       args:
-        user: admin
-        uid: 11125
+        user: nobody
         work_dir: /var/www/admin
         config_dir: /config
+        script_dir: /script
         src_dir: /src
       context: .
       dockerfile: Dockerfile
     container_name: unilabot-app
     restart: unless-stopped
     working_dir: /var/www/admin
-    volumes:
-      - ./src:/var/www/admin
     networks:
       - local
 
