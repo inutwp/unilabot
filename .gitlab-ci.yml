@@ -1,37 +1,47 @@
-stages:       
+stages:
   - build
   - deploy
 
-build-job:   
+build-job:
   stage: build
   image: docker:latest
   services:
     - name: docker:20.10.11-dind
   before_script:
-    - echo "Login Docker Registry" 
+    - echo "Login Docker Registry"
     - docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - echo "Success Login"
   script:
     - echo "Build Docker"
-    - docker build --pull 
-      --build-arg work_dir="$WORK_DIR" 
-      --build-arg config_dir="$CONFIG_DIR" 
-      --build-arg script_dir="$SCRIPT_DIR" 
-      --build-arg src_dir="$SRC_DIR" 
+    - docker build --pull
+      --build-arg work_dir="$WORK_DIR"
+      --build-arg config_dir="$CONFIG_DIR"
+      --build-arg script_dir="$SCRIPT_DIR"
+      --build-arg src_dir="$SRC_DIR"
       --build-arg user="$USER_IMAGE"
-      --no-cache 
+      --no-cache
       -t "$CI_REGISTRY_IMAGE" .
     - docker push "$CI_REGISTRY_IMAGE"
     - echo "Image Build Complete"
+  after_script:
+    - echo "Logout Docker Registry"
+    - docker logout "$CI_REGISTRY"
+    - echo "Success Logout"
+  only:
+    - main
 
-deploy-job:     
+deploy-job:
   stage: deploy
   image: alpine:latest
   script:
     - echo "Deploying application..."
     - chmod og= "$SSH_PRIVATE_KEY"
-    - apk update && apk add openssh-client
+    - apk update
+    - apk add openssh-client
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY""
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker pull "$CI_REGISTRY_IMAGE""
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker container rm -f "$CONTAINER_NAME" || true"
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker run -d --name "$CONTAINER_NAME" "$CI_REGISTRY_IMAGE""
     - echo "Application successfully deployed."
+  only:
+    - main
