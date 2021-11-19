@@ -38,7 +38,3 @@ deploy-job:
     - ssh -i $SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -p $SSH_PORT $SERVER_USER@$SERVER_ADDRESSP "docker container rm -f $CONTAINER_NAME || true"
     - ssh -i $SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -p $SSH_PORT $SERVER_USER@$SERVER_ADDRESSP "docker run -d --name $CONTAINER_NAME $CI_REGISTRY_IMAGE"
     - echo "Application successfully deployed."
-  environment:
-    name: production
-  only:
-    - master
