@@ -28,7 +28,7 @@ deploy-job:
   image: alpine:latest
   script:
     - echo "Deploying application..."
-    - chmod og= $SSH_PRIVATE_KEY"
+    - chmod og= "$SSH_PRIVATE_KEY"
     - apk update && apk add openssh-client
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY""
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker pull "$CI_REGISTRY_IMAGE""
