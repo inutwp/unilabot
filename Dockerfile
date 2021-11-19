@@ -6,11 +6,11 @@ LABEL unilabot.version="v1.0"
 LABEL unilabot.base.image="php:fpm-alpine3.14"
 
 # Argument List
-ARG user
-ARG work_dir
-ARG config_dir
-ARG script_dir
-ARG src_dir
+ARG user=$user
+ARG work_dir=$work_dir
+ARG config_dir=$config_dir
+ARG script_dir=$script_dir
+ARG src_dir=$src_dir
 
 # Install Packages
 RUN apk --update --no-cache add \

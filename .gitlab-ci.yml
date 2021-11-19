@@ -27,7 +27,7 @@ build-job:       # This job runs in the build stage, which runs first.
     - docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
   script:
     - echo "Build Docker"
-    - docker build --pull -t "$CI_REGISTRY_IMAGE" .
+    - docker build --pull --build-arg work_dir="$WORK_DIR" config_dir="$CONFIG_DIR" script_dir="$SCRIPT_DIR" src_dir="$SRC_DIR" user="$USER_IMAGE" -t "$CI_REGISTRY_IMAGE" .
     - docker push "$CI_REGISTRY_IMAGE"
     - echo "Image Build Complete"
 
