@@ -1,23 +1,8 @@
-# This file is a template, and might need editing before it works on your project.
-# To contribute improvements to CI/CD templates, please follow the Development guide at:
-# https://docs.gitlab.com/ee/development/cicd/templates.html
-# This specific template is located at:
-# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
-
-# This is a sample GitLab CI/CD configuration file that should run without any modifications.
-# It demonstrates a basic 3 stage CI/CD pipeline. Instead of real tests or scripts,
-# it uses echo commands to simulate the pipeline execution.
-#
-# A pipeline is composed of independent jobs that run scripts, grouped into stages.
-# Stages run in sequential order, but jobs within stages run in parallel.
-#
-# For more information, see: https://docs.gitlab.com/ee/ci/yaml/index.html#stages
-
-stages:          # List of stages for jobs, and their order of execution
+stages:       
   - build
   - deploy
 
-build-job:       # This job runs in the build stage, which runs first.
+build-job:   
   stage: build
   image: docker:latest
   services:
@@ -27,12 +12,33 @@ build-job:       # This job runs in the build stage, which runs first.
     - docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
   script:
     - echo "Build Docker"
-    - docker build --pull --build-arg work_dir="$WORK_DIR" --build-arg config_dir="$CONFIG_DIR" --build-arg script_dir="$SCRIPT_DIR" --build-arg src_dir="$SRC_DIR" --build-arg user="$USER_IMAGE" -t "$CI_REGISTRY_IMAGE" .
+    - docker build --pull 
+      --build-arg work_dir="$WORK_DIR" 
+      --build-arg config_dir="$CONFIG_DIR" 
+      --build-arg script_dir="$SCRIPT_DIR" 
+      --build-arg src_dir="$SRC_DIR" 
+      --build-arg user="$USER_IMAGE"
+      --no-cache 
+      -t "$CI_REGISTRY_IMAGE" .
     - docker push "$CI_REGISTRY_IMAGE"
     - echo "Image Build Complete"
 
-deploy-job:      # This job runs in the deploy stage.
-  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+deploy-job:     
+  stage: deploy
+  image: alpine:3.15
+  tags:
+    - deployment
+  before_script:
+    - chmod og= $SSH_PRIVATE_KEY
+    - apk --update --no-cache add openssh-client
   script:
     - echo "Deploying application..."
+    - ssh -i $SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -p $SSH_PORT $SERVER_USER@$SERVER_ADDRESSP "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY"
+    - ssh -i $SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -p $SSH_PORT $SERVER_USER@$SERVER_ADDRESSP "docker pull $CI_REGISTRY_IMAGE"
+    - ssh -i $SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -p $SSH_PORT $SERVER_USER@$SERVER_ADDRESSP "docker container rm -f $CONTAINER_NAME || true"
+    - ssh -i $SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -p $SSH_PORT $SERVER_USER@$SERVER_ADDRESSP "docker run -d --name $CONTAINER_NAME $CI_REGISTRY_IMAGE"
     - echo "Application successfully deployed."
+  environment:
+    name: production
+  only:
+    - master
