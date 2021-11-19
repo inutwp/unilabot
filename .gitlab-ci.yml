@@ -41,7 +41,7 @@ deploy-job:
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY""
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker pull "$CI_REGISTRY_IMAGE""
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker container rm -f "$CONTAINER_NAME" || true"
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker run -it -d --name "$CONTAINER_NAME" "$CI_REGISTRY_IMAGE" -v logdata:/var/www/admin/log /bin/bash"
+    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker run -d --name "$CONTAINER_NAME" "$CI_REGISTRY_IMAGE" -v logdata:/var/www/admin/log"
     - echo "Application successfully deployed."
   only:
     - main
