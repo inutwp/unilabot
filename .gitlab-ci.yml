@@ -40,7 +40,7 @@ deploy-job:
     - chmod og= "$SSH_PRIVATE_KEY"
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY""
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker pull "$CI_REGISTRY_IMAGE""
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker stop "$CI_REGISTRY_IMAGE" || true && docker rm -f "$CI_REGISTRY_IMAGE""
+    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker stop /unilabot || true && docker rm -f "$CI_REGISTRY_IMAGE""
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker run -d --name "$CONTAINER_NAME" -v logdata:/var/www/admin/log "$CI_REGISTRY_IMAGE""
     - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker system prune -a -f || true"
     - echo "Application successfully deployed."
