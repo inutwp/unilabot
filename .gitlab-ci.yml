@@ -1,5 +1,6 @@
 stages:
   - build
+  - test
   - deploy
 
 build-job:
@@ -28,6 +29,28 @@ build-job:
     - docker logout "$CI_REGISTRY"
     - echo "Success Logout"
   only:
+    - dev
+    - staging
+    - main
+
+test-job:
+  stage: test
+  image: alpine:latest
+  script: 
+    - echo "Run Test Image"
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker system prune -a -f || true
+    - docker pull "$CI_REGISTRY_IMAGE"    
+    - docker stop "$CONTAINER_NAME" || true && docker rm -f $(docker ps -a -q) || true
+    - docker run 
+      -d --name "$CONTAINER_NAME"
+      --rm 
+      -v logdata:"$LOG_DIR" 
+      "$CI_REGISTRY_IMAGE"
+    - echo "Test Run Image Successfully"
+  only:
+    - dev
+    - staging
     - main
 
 deploy-job:
