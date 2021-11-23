@@ -28,8 +28,6 @@ build-job:
     - echo "Logout Docker Registry"
     - docker logout "$CI_REGISTRY"
     - echo "Success Logout"
-  only:
-    - main
 
 test-job:
   stage: test
@@ -47,7 +45,8 @@ test-job:
       "$CI_REGISTRY_IMAGE"
     - echo "Test Run Image Successfully"
   only:
-    - main
+    - dev
+    - staging
 
 deploy-job:
   stage: deploy
