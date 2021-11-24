@@ -2,7 +2,10 @@ version: '3.7'
 
 networks:
   local:
-    driver: bridge
+    driver: bridge 
+
+volumes:
+  logdata:
 
 services:
   app:
