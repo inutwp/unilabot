@@ -10,11 +10,11 @@ if [[ "$1" == "down" ]]; then
 		echo "Success Down Image Container"
 	fi
 elif [[ "$1" == "up" ]]; then
+	COMPOSE="docker-compose -f ${FILE_COMPOSE_BASE}"
 	echo "Pull Image...."
-	docker-compose -f ${COMPOSE_FILE} pull
-	sleep 1
+	${COMPOSE} pull
 	echo "Up Service...."
-	docker-compose -f ${COMPOSE_FILE} --remove-orphans
+	${COMPOSE} --remove-orphans
 	ISSUCCESSUP=$?
 	if [[ ${ISSUCCESSUP} -gt 0 ]]; then
 		echo "Failed Up Image"
