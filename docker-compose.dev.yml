@@ -1,0 +1,16 @@
+version: '3.7'
+
+networks:
+  local:
+    driver: bridge
+
+services:
+  app:
+    image: ${IMAGE_DEV}:${IMAGE_DEV_TAG}
+    container_name: unilabot-dev
+    working_dir: ${WORK_DIR}
+    restart: on-failure
+    volumes:
+      - logdata:${VOLUMES}
+    networks:
+      - local

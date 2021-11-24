@@ -3,7 +3,7 @@ stages:
   - test
   - deploy
 
-build-job:
+build-image:
   stage: build
   image: docker:latest
   services:
@@ -29,7 +29,7 @@ build-job:
     - docker logout "$CI_REGISTRY"
     - echo "Success Logout"
 
-test-job:
+test-image:
   stage: test
   image: alpine:latest
   script: 
@@ -37,7 +37,7 @@ test-job:
     - cat "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
     - docker system prune -a -f || true
     - docker pull "$CI_REGISTRY_IMAGE"    
-    - docker stop "$CONTAINER_NAME" || true && docker rm -f $(docker ps -a -q) || true
+    - docker stop "$CONTAINER_NAME" || true
     - docker run 
       -d --name "$CONTAINER_NAME"
       --rm 
@@ -48,23 +48,25 @@ test-job:
     - dev
     - staging
 
-deploy-job:
+deploy-image-dev:
   stage: deploy
   image: alpine:latest
   services:
     - name: alpine:latest
-  script:
+  before_script:
     - echo "Deploying application..."
-    - chmod og= "$SSH_PRIVATE_KEY"
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY""
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker system prune -a -f || true"
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker pull "$CI_REGISTRY_IMAGE""
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker stop "$CONTAINER_NAME" || true && docker rm -f $(docker ps -a -q) || true"
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker run 
-      -d --name "$CONTAINER_NAME"
-      --rm 
-      -v logdata:"$LOG_DIR" 
-      "$CI_REGISTRY_IMAGE""
+    - 'whice ssh-agent || ( apk --update --no-cache add openssh )'
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh/id_rsa
+    - eval $(ssh-agent -s)
+    - ssh-add ~/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  script:
+    - ssh 
+      -o StrictHostKeyChecking=no 
+      -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" 
+      "export IMAGE_DEV="$CI_REGISTRY_IMAGE" && export WORK_DIR="$WORK_DIR" && export VOLUMES="LOG_VOLUMES" && cat "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin && bash deploy.sh up"
     - echo "Application successfully deployed."
   only:
-    - main
+    - dev
