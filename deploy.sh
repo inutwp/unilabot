@@ -4,15 +4,20 @@ clear
 
 cd ${WORK_DIR}
 
+echo "Checkout to dev branch"
 git checkout dev
-git fetch origin dev
-git pull origin dev
 
+echo "Fetching branch dev"
+git fetch origin dev
+
+echo "Pulling branch dev"
+git pull origin dev
 IS_SUCCESS_UPDATE_PROJECT=$?
 if [[ ${IS_SUCCESS_UPDATE_PROJECT} -gt 0 ]]; then
 	echo "Failed Update Local Repo, Check Manually"
 	exit 1
 fi
+echo "Success update branch dev"
 
 if [[ "$1" == "down" ]]; then
 	echo "Down Service...."
