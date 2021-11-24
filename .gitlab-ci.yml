@@ -62,6 +62,7 @@ deploy-image-dev:
     - eval $(ssh-agent -s)
     - ssh-add ~/.ssh/id_rsa
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - chmod 600 ~/.ssh/config
   script:
     - ssh 
       -o StrictHostKeyChecking=no 
