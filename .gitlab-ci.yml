@@ -93,7 +93,7 @@ deploy-image-prod:
     - ssh 
       -o StrictHostKeyChecking=no 
       -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" 
-      "export IMAGE_DEV="$CI_REGISTRY_IMAGE" && export WORK_DIR="$WORK_DIR" && export VOLUMES="$LOG_VOLUMES" && export COMPOSE_FILE="$COMPOSE_PROD"" && docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASS_VAR" && cd "$APP_NAME" && git config pull.rebase false && git checkout main && git fetch origin main && git pull origin main && bash deploy.sh up"
+      "export IMAGE_PROD="$CI_REGISTRY_IMAGE" && export WORK_DIR="$WORK_DIR" && export VOLUMES="$LOG_VOLUMES" && export COMPOSE_FILE="$COMPOSE_PROD"" && docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASS_VAR" && cd "$APP_NAME" && git config pull.rebase false && git checkout main && git fetch origin main && git pull origin main && bash deploy.sh up"
     - echo "Application successfully deployed."
   only:
     - main
