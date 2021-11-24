@@ -11,6 +11,7 @@ if [[ "$1" == "down" ]]; then
 	fi
 elif [[ "$1" == "up" ]]; then
 	COMPOSE_FILE= echo ${COMPOSE_FILE} 
+	echo ${COMPOSE_FILE}
 	echo "Pull Image...."
 	docker-compose -f ${COMPOSE_FILE} pull
 	sleep 1
