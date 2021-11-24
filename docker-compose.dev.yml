@@ -6,7 +6,7 @@ networks:
 
 services:
   app:
-    image: ${IMAGE_DEV}:${IMAGE_DEV_TAG}
+    image: ${IMAGE_DEV}:latest
     container_name: unilabot-dev
     working_dir: ${WORK_DIR}
     restart: on-failure

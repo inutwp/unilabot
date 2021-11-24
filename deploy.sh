@@ -4,14 +4,10 @@ clear
 
 cd ${WORK_DIR}
 
-update_project()
-{
-	git checkout dev
-	git fetch origin dev
-	git pull origin dev
-}
+git checkout dev
+git fetch origin dev
+git pull origin dev
 
-update_project
 IS_SUCCESS_UPDATE_PROJECT=$?
 if [[ ${IS_SUCCESS_UPDATE_PROJECT} -gt 0 ]]; then
 	echo "Failed Update Local Repo, Check Manually"
