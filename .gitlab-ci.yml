@@ -43,6 +43,8 @@ test-image:
       --rm 
       -v logdata:"$LOG_DIR" 
       "$CI_REGISTRY_IMAGE"
+    - docker stop "$CONTAINER_NAME" || true
+    - docker system prune -a -f || true
     - echo "Test Run Image Successfully"
   only:
     - dev
