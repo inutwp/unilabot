@@ -55,7 +55,7 @@ deploy-image-dev:
     - name: alpine:latest
   before_script:
     - echo "Deploying application..."
-    - 'whice ssh-agent || ( apk --update --no-cache add openssh )'
+    - 'which ssh-agent || ( apk update && apk add --no-cache openssh )'
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
     - chmod 700 ~/.ssh/id_rsa
