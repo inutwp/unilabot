@@ -14,7 +14,7 @@ elif [[ "$1" == "up" ]]; then
 	echo "Pull Image...."
 	${COMPOSE} pull
 	echo "Up Service...."
-	${COMPOSE} --remove-orphans
+	${COMPOSE} up -d --remove-orphans
 	ISSUCCESSUP=$?
 	if [[ ${ISSUCCESSUP} -gt 0 ]]; then
 		echo "Failed Up Image"
