@@ -19,5 +19,8 @@ elif [[ "$1" == "up" ]]; then
 	if [[ ${ISSUCCESSUP} -gt 0 ]]; then
 		echo "Failed Up Image"
 		exit 1
+	else
+		echo "Clear Redundant"
+		docker system prune -f
 	fi
 fi
