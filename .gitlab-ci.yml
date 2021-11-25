@@ -1,15 +1,16 @@
 stages:
   - build
+  - test
   - deploy
 
-build-job:
+build-image:
   stage: build
   image: docker:latest
   services:
-    - name: docker:20.10.11-dind
+    - name: docker:dind
   before_script:
     - echo "Login Docker Registry"
-    - docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - cat "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
     - echo "Success Login"
   script:
     - echo "Build Docker"
@@ -27,26 +28,72 @@ build-job:
     - echo "Logout Docker Registry"
     - docker logout "$CI_REGISTRY"
     - echo "Success Logout"
-  only:
-    - main
 
-deploy-job:
+test-image:
+  stage: test
+  image: alpine:latest
+  script: 
+    - echo "Run Test Image"
+    - cat "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+    - docker system prune -a -f || true
+    - docker pull "$CI_REGISTRY_IMAGE"    
+    - docker stop "$CONTAINER_NAME" || true
+    - docker run 
+      -d --name "$CONTAINER_NAME"
+      --rm 
+      -v logdata:"$LOG_DIR" 
+      "$CI_REGISTRY_IMAGE"
+    - docker stop "$CONTAINER_NAME" || true
+    - docker system prune -a -f || true
+    - echo "Test Run Image Successfully"
+  only:
+    - dev
+    - staging
+
+deploy-image-dev:
   stage: deploy
   image: alpine:latest
   services:
     - name: alpine:latest
-  script:
+  before_script:
     - echo "Deploying application..."
-    - chmod og= "$SSH_PRIVATE_KEY"
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY""
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker system prune -a -f || true"
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker pull "$CI_REGISTRY_IMAGE""
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker stop "$CONTAINER_NAME" || true && docker rm -f $(docker ps -a -q) || true"
-    - ssh -i "$SSH_PRIVATE_KEY" -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" "docker run 
-      -d --name "$CONTAINER_NAME"
-      --rm 
-      -v logdata:"$LOG_DIR" 
-      "$CI_REGISTRY_IMAGE""
+    - 'which ssh-agent || ( apk update && apk add --no-cache openssh )'
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh/id_rsa
+    - eval $(ssh-agent -s)
+    - ssh-add ~/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - chmod 600 ~/.ssh/config
+  script:
+    - ssh 
+      -o StrictHostKeyChecking=no 
+      -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" 
+      "export IMAGE_DEV="$CI_REGISTRY_IMAGE" && export WORK_DIR="$WORK_DIR" && export VOLUMES="$LOG_VOLUMES" && export COMPOSE_FILE="$COMPOSE_DEV" && docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASS_VAR" && cd "$APP_NAME" && git config pull.rebase false && git checkout dev && git fetch origin dev && git pull origin dev && bash deploy.sh up"
+    - echo "Application successfully deployed."
+  only:
+    - dev
+
+deploy-image-prod:
+  stage: deploy
+  image: alpine:latest
+  services:
+    - name: alpine:latest
+  before_script:
+    - echo "Deploying application..."
+    - 'which ssh-agent || ( apk update && apk add --no-cache openssh )'
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh/id_rsa
+    - eval $(ssh-agent -s)
+    - ssh-add ~/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - chmod 600 ~/.ssh/config
+  script:
+    - ssh 
+      -o StrictHostKeyChecking=no 
+      -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" 
+      "export IMAGE_PROD="$CI_REGISTRY_IMAGE" && export WORK_DIR="$WORK_DIR" && export VOLUMES="$LOG_VOLUMES" && export COMPOSE_FILE="$COMPOSE_PROD" && docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASS_VAR" && cd "$APP_NAME" && git config pull.rebase false && git checkout main && git fetch origin main && git pull origin main && bash deploy.sh up"
     - echo "Application successfully deployed."
   only:
     - main

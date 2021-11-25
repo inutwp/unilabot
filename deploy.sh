@@ -10,21 +10,17 @@ if [[ "$1" == "down" ]]; then
 		echo "Success Down Image Container"
 	fi
 elif [[ "$1" == "up" ]]; then
-	echo "Down Service...."
-	docker-compose down --remove-orphans 2> /dev/null
-	echo "Build Image.... "
-	docker-compose build --no-cache 2> /dev/null
-	ISSUCCESSBUILD=$?
-	if [[ ${ISSUCCESSBUILD} -gt 0 ]]; then
-		echo "Failed Build Image"
-		exit
-	fi
-	sleep 1
+	COMPOSE="docker-compose -f ${COMPOSE_FILE}"
+	echo "Pull Image...."
+	${COMPOSE} pull
 	echo "Up Service...."
-	docker-compose up -d --force-recreate --remove-orphans 2> /dev/null
+	${COMPOSE} up -d --remove-orphans
 	ISSUCCESSUP=$?
 	if [[ ${ISSUCCESSUP} -gt 0 ]]; then
 		echo "Failed Up Image"
-		exit
+		exit 1
+	else
+		echo "Clear Redundant"
+		docker system prune -f
 	fi
 fi
