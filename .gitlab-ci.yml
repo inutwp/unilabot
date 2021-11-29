@@ -37,13 +37,13 @@ test-image:
     - cat "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
     - docker system prune -a -f || true
     - docker pull "$CI_REGISTRY_IMAGE"    
-    - docker stop "$CONTAINER_NAME" || true
+    - docker stop "$CONTAINER_NAME_TEST" || true
     - docker run 
-      -d --name "$CONTAINER_NAME"
+      -d --name "$CONTAINER_NAME_TEST"
       --rm 
       -v logdata:"$LOG_DIR" 
       "$CI_REGISTRY_IMAGE"
-    - docker stop "$CONTAINER_NAME" || true
+    - docker stop "$CONTAINER_NAME_TEST" || true
     - docker system prune -a -f || true
     - echo "Test Run Image Successfully"
   only:
