@@ -171,6 +171,7 @@ $strtotimeLastArticle = strtotime(date('Y-m-d', strtotime($announcementTime)));
 $strtotimeNow = strtotime(date('Y-m-d'));
 
 if ($strtotimeLastArticle == $strtotimeNow && !CheckHasBeenSent($announcementTitle)) {
+	LogData('info', 'Found New Announcements');
 	SendNotifAnnouncement([
 		'title' => $announcementTitle,
 		'tPublish' => $announcementTime,
