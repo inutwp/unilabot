@@ -32,16 +32,16 @@ build-image:
 test-image:
   stage: test
   image: alpine:latest
-  script: 
+  script:
     - echo "Run Test Image"
     - cat "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
     - docker system prune -a -f || true
-    - docker pull "$CI_REGISTRY_IMAGE"    
+    - docker pull "$CI_REGISTRY_IMAGE"
     - docker stop "$CONTAINER_NAME_TEST" || true
-    - docker run 
+    - docker run
       -d --name "$CONTAINER_NAME_TEST"
-      --rm 
-      -v logdata:"$LOG_DIR" 
+      --rm
+      -v logdata:"$LOG_DIR"
       "$CI_REGISTRY_IMAGE"
     - docker stop "$CONTAINER_NAME_TEST" || true
     - docker system prune -a -f || true
@@ -66,9 +66,9 @@ deploy-image-dev:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - chmod 600 ~/.ssh/config
   script:
-    - ssh 
-      -o StrictHostKeyChecking=no 
-      -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" 
+    - ssh
+      -o StrictHostKeyChecking=no
+      -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS"
       "export IMAGE_DEV="$CI_REGISTRY_IMAGE" && export WORK_DIR="$WORK_DIR" && export VOLUMES="$LOG_VOLUMES" && export COMPOSE_FILE="$COMPOSE_DEV" && docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASS_VAR" && cd "$APP_NAME" && git config pull.rebase false && git checkout dev && git fetch origin dev && git pull origin dev && bash deploy.sh up"
     - echo "Application successfully deployed."
   only:
@@ -90,9 +90,9 @@ deploy-image-prod:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - chmod 600 ~/.ssh/config
   script:
-    - ssh 
-      -o StrictHostKeyChecking=no 
-      -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS" 
+    - ssh
+      -o StrictHostKeyChecking=no
+      -p "$SSH_PORT" "$SERVER_USER"@"$SERVER_ADDRESS"
       "export IMAGE_PROD="$CI_REGISTRY_IMAGE" && export WORK_DIR="$WORK_DIR" && export VOLUMES="$LOG_VOLUMES" && export COMPOSE_FILE="$COMPOSE_PROD" && docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASS_VAR" && cd "$APP_NAME" && git config pull.rebase false && git checkout main && git fetch origin main && git pull origin main && bash deploy.sh up"
     - echo "Application successfully deployed."
   only:
